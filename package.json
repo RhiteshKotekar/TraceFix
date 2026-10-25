@@ -1,21 +1,28 @@
 {
-  "name": "waymark",
+  "name": "tracefix",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 8100",
     "build": "next build",
     "start": "next start -p 8100",
-    "lint": "eslint"
+    "lint": "eslint",
+    "stack:up": "docker compose --env-file .env -f infra/docker-compose.yml up -d",
+    "stack:down": "docker compose --env-file .env -f infra/docker-compose.yml down",
+    "load": "node scripts/load.mjs",
+    "sample-alert": "node scripts/send-sample-alert.mjs",
+    "test": "node --test src/lib/*.test.ts"
   },
   "dependencies": {
     "next": "16.4.3",
+    "pg": "^8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

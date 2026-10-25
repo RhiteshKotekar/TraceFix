@@ -1,16 +1,16 @@
-# Waymark Project Context
+# TraceFix Project Context
 
 ## Summary
-Waymark connects a performance alert to a verified fix: detect a slow endpoint, gather evidence, require human approval, let an AI agent propose a targeted patch, measure before/after under the same workload, and open a human-reviewable GitHub PR only when independent checks pass.
+TraceFix connects a performance alert to a verified fix: detect a slow endpoint, gather evidence, require human approval, let an AI agent propose a targeted patch, measure before/after under the same workload, and open a human-reviewable GitHub PR only when independent checks pass.
 
 ## Problem
-Performance work is fragmented: someone notices latency in monitoring, digs through metrics, finds the repo and deployed commit, reproduces, fixes, benchmarks, and writes it up. Waymark links those steps with traceable evidence.
+Performance work is fragmented: someone notices latency in monitoring, digs through metrics, finds the repo and deployed commit, reproduces, fixes, benchmarks, and writes it up. TraceFix links those steps with traceable evidence.
 
 ## Hackathon constraint
 **3 hours, one person/team, one demo.** Everything below is scoped to one target service, one endpoint, one seeded bug.
 
 ## Core demo
-The target app (Express + PostgreSQL shop backend, own GitHub repo) has a planted **N+1 query** on `GET /api/products` (one query per product for its reviews). It exposes Prometheus metrics. Under k6 load, Grafana's p95 alert fires and posts a webhook to Waymark. The incident shows evidence; a user approves. The worker checks out the deployed commit, runs tests + k6 baseline, asks the agent for a fix, applies it in a git worktree, runs tests + the same k6 workload, compares, and opens a PR only on `PASS`.
+The target app (Express + PostgreSQL shop backend, own GitHub repo) has a planted **N+1 query** on `GET /api/products` (one query per product for its reviews). It exposes Prometheus metrics. Under k6 load, Grafana's p95 alert fires and posts a webhook to TraceFix. The incident shows evidence; a user approves. The worker checks out the deployed commit, runs tests + k6 baseline, asks the agent for a fix, applies it in a git worktree, runs tests + the same k6 workload, compares, and opens a PR only on `PASS`.
 
 ## Goals (P0 — must work for the demo)
 - Grafana webhook → validated, deduplicated incident in PostgreSQL.

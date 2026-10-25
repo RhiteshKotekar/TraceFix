@@ -47,7 +47,7 @@ waymark/
 │   ├── index.ts                         # poll loop + stage runner
 │   ├── evidence.ts  target.ts  loadtest.ts  agent.ts  gates.ts  github.ts
 │   └── gates.test.ts
-├── loadtest/products.js                 # k6 workload (owned by Waymark, not the target)
+├── loadtest/products.js                 # k6 workload (owned by TraceFix, not the target)
 ├── db/schema.sql
 ├── infra/docker-compose.yml
 ├── infra/prometheus/prometheus.yml

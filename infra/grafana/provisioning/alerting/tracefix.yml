@@ -1,0 +1,82 @@
+# Provisioned alerting for TraceFix (Grafana file provisioning, apiVersion 1).
+# Labels go through Grafana's env-var expansion, so they need `$$labels`; annotations do not, so they use `$labels`.
+# Resources defined here are read-only in the Grafana UI; edit this file and restart Grafana to change them.
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: tracefix-latency
+    folder: TraceFix
+    interval: 10s
+    rules:
+      - uid: tracefix-high-p95
+        title: HighEndpointLatency
+        condition: C
+        data:
+          # A: p95 latency per route over the last minute (seconds). One alert instance per route.
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              datasource: { type: prometheus, uid: prometheus }
+              expr: >-
+                histogram_quantile(0.95, sum by (le, route)
+                (rate(http_request_duration_seconds_bucket{job="shop-backend", route!~"unmatched|/metrics"}[1m])))
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+          # B: latest value per series.
+          - refId: B
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: B
+              datasource: { type: __expr__, uid: __expr__ }
+              type: reduce
+              expression: A
+              reducer: last
+          # C: fire when p95 > 0.2s (200 ms). Keep in sync with ALERT_P95_THRESHOLD_MS in .env.
+          - refId: C
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: C
+              datasource: { type: __expr__, uid: __expr__ }
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: { type: gt, params: [0.2] }
+        for: 30s
+        # No traffic or a query error is not a performance incident.
+        noDataState: OK
+        execErrState: OK
+        labels:
+          service: shop-backend
+          endpoint: '{{ $$labels.route }}'
+          severity: warning
+        annotations:
+          summary: 'p95 latency above 200ms on {{ $labels.route }}'
+
+contactPoints:
+  - orgId: 1
+    name: tracefix
+    receivers:
+      - uid: tracefix-webhook
+        type: webhook
+        disableResolveMessage: false
+        settings:
+          url: $TRACEFIX_WEBHOOK_URL
+          httpMethod: POST
+          authorization_scheme: Bearer
+          authorization_credentials: $GRAFANA_WEBHOOK_SECRET
+
+# Replaces the whole policy tree (fine for this local Grafana).
+policies:
+  - orgId: 1
+    receiver: tracefix
+    group_by: ['alertname', 'endpoint']
+    group_wait: 5s
+    group_interval: 30s
+    # While an alert keeps firing Grafana re-sends it; each delivery shows up as activity on the incident.
+    repeat_interval: 2m

@@ -4,7 +4,7 @@ Build one end-to-end vertical slice. Order is by risk: get the unknowns (target 
 
 ## Phase 0 — Setup (0:00–0:20)
 - [ ] `npm install`; read `node_modules/next/dist/docs/` for Route Handlers and `proxy.ts` (Next 16 renamed middleware).
-- [ ] `infra/docker-compose.yml`: postgres (`:5433`, DBs `waymark` + `shop`), prometheus (`:9090`), grafana (`:3001`).
+- [ ] `infra/docker-compose.yml`: postgres (`:5433`, DBs `tracefix` + `shop`), prometheus (`:9090`), grafana (`:3001`).
 - [ ] `infra/prometheus/prometheus.yml` scraping the target on `host.docker.internal:5002`.
 - [ ] `db/schema.sql` (see `DATA_MODEL.md`); `.env` from `.env.example`.
 - [ ] `npm run worker` script → `node --env-file=.env worker/index.ts` (Node 24 runs TS natively).
@@ -18,7 +18,7 @@ Do this in the **separate target repo** (moved out of `Temp/Demo-App`).
 - [ ] `GET /api/version` → `{ "sha": "<git rev-parse HEAD at startup>" }`.
 - [ ] Seed ~300 products + reviews table so N+1 is measurable.
 - [ ] Plant N+1 in `GET /api/products` (per-product reviews query); keep `npm test` passing.
-- [ ] `loadtest/products.js` k6 script (fixed VUs, duration, `GET /api/products`). Lives in **Waymark**, not the target, so the agent cannot change it.
+- [ ] `loadtest/products.js` k6 script (fixed VUs, duration, `GET /api/products`). Lives in **TraceFix**, not the target, so the agent cannot change it.
 
 **Done when:** k6 against the target shows clearly elevated p95 in Prometheus.
 
@@ -55,7 +55,7 @@ Do this in the **separate target repo** (moved out of `Temp/Demo-App`).
 - [ ] `evaluateGates(baseline, candidate)` pure function + unit test (see `TESTING_AND_VALIDATION.md`).
 
 ## Phase 7 — PR + report (2:35–2:50)
-- [ ] On `PASS`: branch `waymark/<jobId>`, commit, push (token over HTTPS), `POST /repos/{owner}/{repo}/pulls` with markdown report.
+- [ ] On `PASS`: branch `tracefix/<jobId>`, commit, push (token over HTTPS), `POST /repos/{owner}/{repo}/pulls` with markdown report.
 - [ ] Report (also stored on job, shown in UI): evidence, hypothesis, diff, before/after table, gate results, limitations.
 
 ## Phase 8 — Rehearse (2:50–3:00)

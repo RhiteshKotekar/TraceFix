@@ -1,16 +1,16 @@
-# Waymark — Handoff for building the presentation
+# TraceFix — Handoff for building the presentation
 
 Paste this whole file into ChatGPT (or read it yourself) to build the slide deck. It is standalone: no other file is needed.
 
 ## One-line pitch
-**Waymark turns a slow-endpoint alert into a verified pull request: an AI proposes the fix, but deterministic code proves it works before anything is opened for human review.**
+**TraceFix turns a slow-endpoint alert into a verified pull request: an AI proposes the fix, but deterministic code proves it works before anything is opened for human review.**
 
 ## The problem
 Performance work is fragmented. Someone notices latency in a dashboard, digs through metrics, finds the repo and the deployed commit, reproduces the issue, writes a fix, benchmarks it and writes it up. Each step happens in a different tool, and the evidence gets lost. AI coding tools can write a "fix", but nobody can trust one that hasn't been measured.
 
-## What Waymark does (the flow)
-1. **Detect:** the monitored app exposes metrics to Prometheus. A Grafana alert fires when p95 latency on an endpoint is too high and sends a webhook to Waymark.
-2. **Record:** Waymark validates and deduplicates the alert and stores it as an *incident* awaiting approval.
+## What TraceFix does (the flow)
+1. **Detect:** the monitored app exposes metrics to Prometheus. A Grafana alert fires when p95 latency on an endpoint is too high and sends a webhook to TraceFix.
+2. **Record:** TraceFix validates and deduplicates the alert and stores it as an *incident* awaiting approval.
 3. **Approve:** a human reviews the evidence on the incident page and clicks Approve or Reject. Nothing runs before approval.
 4. **Investigate:** a background worker pulls latency, request-rate and error-rate evidence from Prometheus. It reads the deployed commit from the app's `/api/version` and checks out exactly that commit. It never silently uses the latest `main`.
 5. **Baseline:** it runs the repo's tests and a fixed k6 load test against the *unchanged* code.
@@ -22,13 +22,13 @@ Performance work is fragmented. Someone notices latency in a dashboard, digs thr
 ## Demo scenario
 - Target app: a small e-commerce backend (Express + PostgreSQL) in its own repo, `waymark-target-shop`.
 - Planted bug: an **N+1 query** on `GET /api/products` (one extra query per product for its reviews).
-- Under load, p95 latency spikes, the alert fires, and Waymark runs the flow above. The agent should fix it by batching the queries (a join or a single `WHERE product_id = ANY(...)`). The PR shows p95 dropping.
+- Under load, p95 latency spikes, the alert fires, and TraceFix runs the flow above. The agent should fix it by batching the queries (a join or a single `WHERE product_id = ANY(...)`). The PR shows p95 dropping.
 - If the Grafana alert is flaky on stage, a script posts a sample alert instead. The rest of the flow is identical.
 
 ## Key ideas to emphasise (what makes it different)
 - **Human in the loop:** an alert is not permission to run code. A person approves first.
 - **The model doesn't grade its own homework:** pass/fail is decided in code from measured numbers.
-- **Same workload, same conditions:** the baseline and the candidate use the identical k6 script, which lives in Waymark so the agent cannot edit it.
+- **Same workload, same conditions:** the baseline and the candidate use the identical k6 script, which lives in TraceFix so the agent cannot edit it.
 - **Pinned to the deployed commit:** the fix is built against what is actually running.
 - **Honest failure modes:** noisy or invalid comparisons are labelled `INCONCLUSIVE`, missing metrics are shown as missing, and results are never fabricated.
 - **Bounded agent:** read-only tools, a path allowlist, no changes to tests or package files.
@@ -63,7 +63,7 @@ Next.js 16 / React 19 / Tailwind 4 · Node 24 + TypeScript worker · PostgreSQL 
 - The GitHub token is scoped to the target repo only.
 
 ## Status — be honest on the slides
-This was a 3-hour hackathon build. At the time of writing, the **design and docs are done, the demo target app exists, and the Waymark pipeline itself is still being built**. Update this section before presenting. Suggested wording for the final deck: list what is working live and what is shown as a recorded run.
+This was a 3-hour hackathon build. At the time of writing, the **design and docs are done, the demo target app exists, and the TraceFix pipeline itself is still being built**. Update this section before presenting. Suggested wording for the final deck: list what is working live and what is shown as a recorded run.
 
 Planned build order: setup → target app instrumentation and planted bug → alert intake and UI → worker and evidence → baseline → agent patch → verify and gates → PR → rehearsal.
 
@@ -73,7 +73,7 @@ Docker sandbox for untrusted repos, multi-service and multi-repo support, job le
 ## Suggested slide outline (about 8 slides)
 1. Title and pitch
 2. The problem
-3. How Waymark works (the 9-step flow as a diagram)
+3. How TraceFix works (the 9-step flow as a diagram)
 4. Live demo or recorded demo (N+1 on `/api/products`)
 5. Why you can trust the fix (gates, human approval, same workload)
 6. Architecture and stack
@@ -82,7 +82,7 @@ Docker sandbox for untrusted repos, multi-service and multi-repo support, job le
 
 ## Visuals to capture for the deck
 - Grafana panel showing the p95 spike
-- Waymark incident page with the Approve button
+- TraceFix incident page with the Approve button
 - Job progress through the stages (`EVIDENCE` → `CHECKOUT` → `BASELINE` → `INVESTIGATING` → `PATCHING` → `VERIFYING` → `OPENING_PR`)
 - Before/after table from the report
 - The opened GitHub PR

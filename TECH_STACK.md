@@ -13,7 +13,7 @@
 | Git | `git` CLI via `child_process.execFile` | Clone per job into `.workspaces/` |
 | PR | GitHub REST API via `fetch` | `gh` not installed |
 
-## New dependencies (Waymark)
+## New dependencies (TraceFix)
 `pg`, `@types/pg`, `@openai/agents`, `zod`. Nothing else.
 
 ## Not used
