@@ -1,26 +1,111 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Surfaces & Backgrounds */
+  --bg-page: #f4f7f6;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f9fbfb;
+  --bg-card-subtle: #f8faf9;
+  --bg-surface: #edf3f0;
+  --bg-overlay: rgba(18, 38, 30, 0.4);
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Reference 1: Mint Hero Palette */
+  --mint-hero-bg: #b7e3d4;
+  --mint-hero-surface: #c9ede1;
+  --mint-hero-border: #9fd6c4;
+  --mint-hero-text: #13392a;
+  --mint-hero-subtext: #245842;
+  --mint-hero-pill-bg: #ffffff;
+  --mint-hero-pill-text: #13392a;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Reference 2: Sky Blue Accent Palette */
+  --sky-accent: #38bdf8;
+  --sky-accent-bg: #e0f2fe;
+  --sky-accent-border: #bae6fd;
+  --sky-accent-text: #0369a1;
+
+  /* Text & Typography */
+  --text-primary: #111815;
+  --text-secondary: #42524a;
+  --text-muted: #788a82;
+  --text-light: #a3b3ac;
+  --text-inverse: #ffffff;
+
+  /* Borders & Dividers */
+  --border-subtle: #e4ece8;
+  --border-card: #eaefed;
+  --border-strong: #c8d7d1;
+  --border-focus: #13392a;
+
+  /* Workflow & Severity Statuses */
+  --status-critical: #ef4444;
+  --status-critical-bg: #fef2f2;
+  --status-critical-border: #fecaca;
+  --status-critical-text: #991b1b;
+
+  --status-warning: #f59e0b;
+  --status-warning-bg: #fffbeb;
+  --status-warning-border: #fde68a;
+  --status-warning-text: #92400e;
+
+  --status-success: #10b981;
+  --status-success-bg: #ecfdf5;
+  --status-success-border: #a7f3d0;
+  --status-success-text: #065f46;
+
+  --status-info: #3b82f6;
+  --status-info-bg: #eff6ff;
+  --status-info-border: #bfdbfe;
+  --status-info-text: #1e40af;
+
+  --status-neutral: #64748b;
+  --status-neutral-bg: #f1f5f9;
+  --status-neutral-border: #cbd5e1;
+  --status-neutral-text: #334155;
+
+  /* AI Refinement Accent */
+  --ai-accent: #f59e0b;
+  --ai-accent-bg: #fffbeb;
+  --ai-accent-border: #fef08a;
+  --ai-accent-text: #854d0e;
+
+  /* Geometry & Radii */
+  --radius-xs: 0.375rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-card: 1.5rem;
+  --radius-sheet: 2rem;
+  --radius-pill: 9999px;
+
+  /* Elevation Shadows */
+  --shadow-card: 0 4px 20px -2px rgba(18, 43, 37, 0.04), 0 2px 6px -1px rgba(18, 43, 37, 0.02);
+  --shadow-card-hover: 0 10px 25px -4px rgba(18, 43, 37, 0.07), 0 4px 10px -2px rgba(18, 43, 37, 0.03);
+  --shadow-drawer: -8px 0 32px rgba(18, 43, 37, 0.08);
+  --shadow-pill: 0 2px 10px rgba(18, 43, 37, 0.05);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar matching soft mint/slate aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
