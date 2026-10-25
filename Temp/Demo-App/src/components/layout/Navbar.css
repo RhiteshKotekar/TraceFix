@@ -1,0 +1,262 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.navbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 60px;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  color: var(--text);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: -0.01em;
+}
+.logo-icon { color: var(--brand); font-size: 1.1rem; }
+
+.navbar-search {
+  flex: 1;
+  max-width: 440px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.navbar-search svg {
+  position: absolute;
+  left: 11px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.navbar-search input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.875rem;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--transition), background var(--transition);
+}
+.navbar-search input:focus {
+  border-color: var(--brand);
+  background: var(--bg-white);
+}
+.navbar-search input::-webkit-search-cancel-button { cursor: pointer; }
+
+.navbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.nav-link {
+  padding: 7px 12px;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: color var(--transition), background var(--transition);
+  white-space: nowrap;
+}
+.nav-link:hover { color: var(--text); background: var(--bg); }
+
+.failure-simulator { position: relative; flex-shrink: 0; }
+.failure-simulator > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.failure-simulator > summary::-webkit-details-marker { display: none; }
+.failure-simulator > summary::after { content: '⌄'; margin-left: 7px; }
+.failure-simulator[open] > summary { color: var(--brand); border-color: var(--brand); }
+.failure-simulator-panel {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1200px, calc(100vw - 48px));
+  max-height: min(78vh, 720px);
+  overflow: auto;
+  padding: 18px;
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 250;
+}
+.simulator-notice { margin: 0 0 16px; padding: 12px 14px; background: #fff7e6; color: #754d00; border-radius: var(--radius); font-size: 0.82rem; line-height: 1.45; }
+.simulator-scenario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 12px; }
+.simulator-scenario { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; padding: 15px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-white); font-size: 0.8rem; }
+.simulator-scenario-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.simulator-scenario-heading strong { font-size: 0.84rem; color: var(--text); }
+.simulator-scenario-heading span, .simulator-scenario small { color: var(--text-muted); font-size: 0.68rem; }
+.simulator-scenario > p { margin: 8px 0; color: var(--text-muted); line-height: 1.5; }
+.simulator-scenario-actions { display: flex; align-items: center; gap: 8px; margin: 2px 0 7px; }
+.simulator-trigger, .simulator-recover { border: 0; border-radius: 6px; padding: 8px 12px; color: white; background: var(--brand); font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: filter var(--transition), opacity var(--transition); }
+.simulator-trigger:hover, .simulator-recover:hover { filter: brightness(0.92); }
+.simulator-recover { background: #39734a; }
+.simulator-trigger:disabled, .simulator-recover:disabled { opacity: 0.55; cursor: wait; }
+.simulator-status { color: var(--text-muted); font-size: 0.73rem; font-weight: 700; text-transform: capitalize; }
+.simulator-status.is-failed { color: #b42318; }
+.simulator-status.is-active { color: #b54708; }
+.simulator-status.is-completed { color: #39734a; }
+.simulator-scenario > .simulator-signal { margin-top: auto; padding-top: 9px; color: var(--text); font-size: 0.75rem; }
+.simulator-result { font-size: 0.75rem; }
+.simulator-footnote { display: block; padding-top: 12px; margin-top: 14px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.72rem; }
+
+.user-menu { position: relative; }
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg-white);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  transition: border-color var(--transition);
+}
+.user-btn:hover { border-color: var(--brand); }
+.user-avatar {
+  width: 24px; height: 24px;
+  background: var(--brand);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.user-name { max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.user-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  min-width: 170px;
+  overflow: hidden;
+  z-index: 200;
+  animation: dropIn 0.15s ease;
+}
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.user-dropdown a,
+.user-dropdown button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: none;
+  border: none;
+  transition: background var(--transition);
+}
+.user-dropdown a:hover,
+.user-dropdown button:hover { background: var(--bg); }
+.dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+.cart-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  background: var(--bg-white);
+  color: var(--text);
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.cart-btn:hover { border-color: var(--brand); color: var(--brand); }
+.cart-badge {
+  position: absolute;
+  top: -6px; right: -6px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  min-width: 18px; height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--bg-white);
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 8px;
+  margin-left: auto;
+}
+.hamburger span {
+  display: block;
+  width: 22px; height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: all var(--transition);
+}
+
+@media (max-width: 768px) {
+  .navbar-search { max-width: 180px; }
+  .hamburger { display: flex; }
+  .navbar-nav {
+    display: none;
+    position: absolute;
+    top: 60px;
+    left: 0; right: 0;
+    background: var(--bg-white);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    box-shadow: var(--shadow);
+  }
+  .navbar-nav.open { display: flex; }
+  .nav-link { width: 100%; padding: 10px 12px; }
+  .user-menu { width: 100%; }
+  .failure-simulator { width: 100%; }
+  .failure-simulator > summary { width: fit-content; }
+  .failure-simulator-panel { position: static; width: 100%; max-height: 55vh; margin-top: 6px; transform: none; padding: 12px; box-shadow: none; }
+  .simulator-scenario-grid { grid-template-columns: 1fr; }
+  .user-dropdown { position: static; box-shadow: none; border: 1px solid var(--border); margin-top: 4px; }
+  .cart-btn { margin-left: 0; }
+}
