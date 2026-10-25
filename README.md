@@ -12,7 +12,7 @@ cp .env.example .env            # fill in OPENAI_API_KEY, GITHUB_TOKEN, ADMIN_PA
 npm install
 docker compose -f infra/docker-compose.yml up -d   # postgres, prometheus, grafana
 psql "$DATABASE_URL" -f db/schema.sql
-npm run dev                     # web UI on :3000
+npm run dev                     # web UI on :8100
 npm run worker                  # worker loop (separate terminal)
 ./scripts/send-sample-alert.sh  # fallback if Grafana alert hasn't fired
 ```
