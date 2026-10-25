@@ -1,36 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Waymark
 
-## Getting Started
+AI-assisted performance investigation with verified fixes.
 
-First, run the development server:
+A Grafana latency alert becomes an incident. A human approves it. A worker gathers evidence, checks out the deployed commit of the target app, measures a baseline, asks an OpenAI agent for a bounded patch, re-measures with the identical k6 workload, and opens a GitHub PR **only** if deterministic gates pass. Never auto-merges or deploys.
 
+The monitored ("slow") app lives in its own repository — see `TARGET_REPO_URL` in `.env.example`.
+
+## Quick start
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env            # fill in OPENAI_API_KEY, GITHUB_TOKEN, ADMIN_PASSWORD
+npm install
+docker compose -f infra/docker-compose.yml up -d   # postgres, prometheus, grafana
+psql "$DATABASE_URL" -f db/schema.sql
+npm run dev                     # web UI on :3000
+npm run worker                  # worker loop (separate terminal)
+./scripts/send-sample-alert.sh  # fallback if Grafana alert hasn't fired
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Docs (read in this order)
+1. `PROJECT_CONTEXT.md` — what and why, scope cuts.
+2. `BUILD_PLAN.md` — 3-hour plan + checklist.
+3. `ARCHITECTURE.md` — components, layout, flow.
+4. `WORKFLOWS.md` — statuses and stages.
+5. `SECURITY.md` — trust boundaries.
+6. `DATA_MODEL.md`, `API_CONTRACTS.md`, `TESTING_AND_VALIDATION.md`.
+7. `TECH_STACK.md`, `DECISIONS.md`.
+8. `AGENT_INSTRUCTIONS.md` — rules for AI coding assistants.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+These documents describe intended behavior; check `BUILD_PLAN.md` checkboxes for what actually exists.
