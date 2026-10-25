@@ -22,6 +22,8 @@ export function LiveFeed() {
   const [offline, setOffline] = useState(false);
   const [shown, setShown] = useState<Record<LiveEvent["source"], boolean>>({ prometheus: true, grafana: true, tracefix: true });
   const seen = useRef(new Set<string>());
+  // Last logged Prometheus state: a sample is logged only when this changes, or once a minute as a heartbeat.
+  const lastProm = useRef({ key: "", at: 0 });
   const cursor = useRef(0);
 
   useEffect(() => {
@@ -35,7 +37,16 @@ export function LiveFeed() {
         if (!res.ok) throw new Error(String(res.status));
         const data: LiveSnapshot = await res.json();
         cursor.current = data.cursor;
-        const fresh = data.events.filter((e) => !seen.current.has(e.id));
+        const fresh = data.events.filter((e) => {
+          if (seen.current.has(e.id)) return false;
+          if (e.source !== "prometheus") return true;
+          const m = data.metrics;
+          const key = [e.level, data.prometheus, data.route ?? "", m.up, m.p95Ms != null && m.p95Ms > 200].join("|");
+          const now = Date.now();
+          if (key === lastProm.current.key && now - lastProm.current.at < 60_000) return false;
+          lastProm.current = { key, at: now };
+          return true;
+        });
         fresh.forEach((e) => seen.current.add(e.id));
         setSnap(data);
         setOffline(false);
