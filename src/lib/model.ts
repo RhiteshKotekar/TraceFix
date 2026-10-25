@@ -29,6 +29,30 @@ export const STAGES: { id: Stage; label: string }[] = [
   { id: "OPENING_PR", label: "Open PR" },
 ];
 
+// What the repair agent returned, after schema validation. Facts and hypotheses are kept apart.
+export type AgentOutput = {
+  diagnosis: string;
+  observedFacts: string[];
+  hypotheses: string[];
+  evidenceRefs: string[];
+  uncertainty: { level: "low" | "medium" | "high"; reason: string };
+  risks: string[];
+  editedPaths: string[];
+  // Back-compat with the first UI version.
+  hypothesis?: string;
+  evidence?: string[];
+};
+
+export type ModelMeta = {
+  provider: "openai";
+  model: string;
+  responseIds: string[];
+  inputTokens: number;
+  outputTokens: number;
+  toolCalls: number;
+  durationMs: number;
+};
+
 // AI triage runs once per incident before any decision; it never executes code.
 export type Triage = {
   score: number; // 0–100: how strongly a code fix is warranted
@@ -76,16 +100,19 @@ export type Job = {
   evidence: Metrics | null;
   baseline: RunResult | null;
   candidate: RunResult | null;
-  agentOutput: {
-    hypothesis: string;
-    evidence: string[];
-    risks: string[];
-    editedPaths: string[];
-  } | null;
+  agentOutput: AgentOutput | null;
   diff: string | null;
   decision: "PASS" | "FAIL" | "INCONCLUSIVE" | null;
   gateResults: Gate[] | null;
   prUrl: string | null;
+  prRepo: string | null;
+  prNumber: number | null;
+  prBranch: string | null;
+  prState: "open" | "closed" | "merged" | null;
+  prReview: "approved" | "changes_requested" | "commented" | null;
+  prUpdatedAt: string | null;
+  modelMeta: ModelMeta | null;
+  attempts: number;
   error: string | null;
   runLog: RunStep[];
   reproduction: Reproduction | null;
@@ -118,6 +145,7 @@ export type Incident = {
   service: string;
   endpoint: string;
   status: IncidentStatus;
+  resolvedAt: string | null; // every report resolved in Grafana; independent of the repair
   decidedBy: string | null;
   decisionReason: string | null;
   decidedAt: string | null;
@@ -155,6 +183,7 @@ export type Project = {
   baseUrl: string;
   metricsPath: string;
   p95ThresholdMs: string;
+  editablePaths: string; // comma-separated path prefixes the agent may edit, relative to the app subdirectory
   completedAt: string | null;
 };
 
@@ -179,6 +208,7 @@ export const EMPTY_PROJECT: Project = {
   baseUrl: "",
   metricsPath: "/metrics",
   p95ThresholdMs: "200",
+  editablePaths: "",
   completedAt: null,
 };
 

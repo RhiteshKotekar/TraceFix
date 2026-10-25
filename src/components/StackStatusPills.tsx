@@ -39,11 +39,20 @@ export function StackStatusPills() {
       ? { state: "down", detail: "Not reachable at GRAFANA_URL" }
       : { state: "ok", detail: s.lastWebhookAt ? `Connected · last alert ${new Date(s.lastWebhookAt).toLocaleTimeString("en-GB")}` : "Connected · no alerts received yet" };
 
+  const direct: Item = !s
+    ? { state: "unknown", detail: "Checking…" }
+    : !s.metricsUrl
+      ? { state: "warn", detail: "No metrics URL yet: set the base URL in project setup" }
+      : s.metricsEndpoint
+        ? { state: "ok", detail: `Reading ${s.metricsUrl}` }
+        : { state: "down", detail: `${s.metricsUrl} is not reachable or not Prometheus text` };
+
   if (offline) return <Pill name="TraceFix API" item={{ state: "down", detail: "Status check failed" }} />;
   return (
     <div className="flex items-center gap-1.5" aria-live="polite">
       <Pill name="Prometheus" item={prom} />
       <Pill name="Grafana" item={graf} />
+      <Pill name="Metrics URL" item={direct} />
     </div>
   );
 }

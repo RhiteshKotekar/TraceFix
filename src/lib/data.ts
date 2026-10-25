@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { pool } from "@/lib/db";
+import { requirePageUser } from "@/lib/auth";
 
 export * from "@/lib/model";
 import type { Incident, Job, Report } from "@/lib/model";
@@ -22,6 +23,14 @@ function toJob(r: any): Job {
     decision: r.decision,
     gateResults: r.gate_results,
     prUrl: r.pr_url,
+    prRepo: r.pr_repo,
+    prNumber: r.pr_number,
+    prBranch: r.pr_branch,
+    prState: r.pr_state,
+    prReview: r.pr_review,
+    prUpdatedAt: iso(r.pr_updated_at),
+    modelMeta: r.model_meta,
+    attempts: r.attempts ?? 0,
     error: r.error,
     runLog: r.run_log ?? [],
     reproduction: r.reproduction,
@@ -68,6 +77,7 @@ async function load(where: string, params: unknown[]): Promise<Incident[]> {
         service: r.service,
         endpoint: r.endpoint,
         status: r.status,
+        resolvedAt: iso(r.resolved_at),
         decidedBy: r.decided_by,
         decisionReason: r.decision_reason,
         decidedAt: iso(r.decided_at),
@@ -83,13 +93,25 @@ async function load(where: string, params: unknown[]): Promise<Incident[]> {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+// Unauthenticated loaders for route handlers that already ran guard().
+export async function listIncidents(): Promise<Incident[]> {
+  return load("", []);
+}
+export async function findIncident(id: string): Promise<Incident | null> {
+  if (!UUID.test(id)) return null;
+  return (await load("WHERE id = $1", [id]))[0] ?? null;
+}
+
+// Page loaders: require a valid session (redirects to /login).
 export async function getIncidents(): Promise<Incident[]> {
+  await requirePageUser();
   return load("", []);
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function getIncident(id: string): Promise<Incident | null> {
+  await requirePageUser();
   if (!UUID.test(id)) return null;
   return (await load("WHERE id = $1", [id]))[0] ?? null;
 }

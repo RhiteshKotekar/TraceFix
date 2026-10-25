@@ -156,32 +156,7 @@ function Wizard({ initial, ghKeyConfigured }: { initial: Project | null; ghKeyCo
           )}
 
           {step === 3 && (
-            <>
-              <p className="text-sm text-muted">
-                Everything runs on localhost. Prometheus scrapes the shop app, Grafana evaluates the alert rule and posts each
-                firing alert to TraceFix. Grafana is provisioned from <span className="font-mono">infra/grafana/provisioning</span>,
-                so there is nothing to click in its UI.
-              </p>
-              <SetupItem n={1} title="Start Postgres, Prometheus and Grafana" body="From the tracefix repo root. Needs GRAFANA_WEBHOOK_SECRET in .env.">
-                <CopyBlock label="Terminal" value="npm run stack:up" />
-              </SetupItem>
-              <SetupItem
-                n={2}
-                title={`Start ${p.service || "your service"}`}
-                body={`It must expose ${p.metricsPath} for Prometheus and ${p.versionPath} for the running commit, and its job name in infra/prometheus/prometheus.yml must be "${p.service || "<service>"}".`}
-              >
-                <CopyBlock label="Terminal" value={p.startCommand} />
-              </SetupItem>
-              <SetupItem n={3} title="Generate traffic" body={`Optional demo load: sends concurrent requests until p95 crosses ${p.p95ThresholdMs} ms; the rule fires after 30s.`}>
-                <CopyBlock label="Terminal" value="npm run load" />
-              </SetupItem>
-              <StackChecklist />
-              <p className="text-xs text-muted">
-                What Grafana sends: rule <span className="font-mono">HighEndpointLatency</span> (p95 &gt; 200 ms for 30s, one alert per
-                route) → contact point <span className="font-mono">tracefix</span> → <span className="font-mono">POST /api/webhooks/grafana</span>{" "}
-                with a bearer secret. Repeats every 2 minutes while firing.
-              </p>
-            </>
+            <ConnectGrafana p={p} />
           )}
 
           {step === 4 && (
@@ -255,5 +230,46 @@ function SetupItem({ n, title, body, children }: { n: number; title: string; bod
         {children}
       </div>
     </div>
+  );
+}
+
+// Settings to enter in the user's own Grafana so its alerts reach TraceFix.
+function ConnectGrafana({ p }: { p: Project }) {
+  const origin = window.location.origin;
+  const webhook = `${origin}/api/webhooks/grafana`;
+  const dockerWebhook = webhook.replace(/\/\/(localhost|127\.0\.0\.1)/, "//host.docker.internal");
+  return (
+    <>
+      <p className="text-sm text-muted">
+        TraceFix uses your existing Prometheus and Grafana (<span className="font-mono">PROMETHEUS_URL</span> and{" "}
+        <span className="font-mono">GRAFANA_URL</span> in <span className="font-mono">.env</span>). Grafana sends each firing alert to
+        TraceFix through a webhook contact point.
+      </p>
+      <SetupItem n={1} title="Start the TraceFix database" body="From the TraceFix repo root.">
+        <CopyBlock label="Terminal" value="npm run db:up" />
+      </SetupItem>
+      <SetupItem
+        n={2}
+        title="Add a webhook contact point in Grafana"
+        body="Alerting → Contact points → Add contact point → Integration: Webhook. Under Optional settings set Authorization header: scheme Bearer, credentials = the value of GRAFANA_WEBHOOK_SECRET in TraceFix's .env."
+      >
+        {dockerWebhook !== webhook && <CopyBlock label="URL if Grafana runs in Docker" value={dockerWebhook} />}
+        <CopyBlock label={dockerWebhook !== webhook ? "URL if Grafana runs on this machine" : "URL"} value={webhook} />
+      </SetupItem>
+      <SetupItem
+        n={3}
+        title="Make sure your alert rule carries the right labels"
+        body={`TraceFix groups alerts by alert name + service + endpoint. Each alert needs an endpoint label (endpoint or route) and a service label; if service is missing, the Prometheus job label is used, then the project's service name "${p.service || "<service>"}".`}
+      >
+        <CopyBlock label="Example labels on the rule" value={`service = ${p.service || "<service>"}\nendpoint = {{ $labels.route }}`} />
+      </SetupItem>
+      <SetupItem n={4} title="Route the rule to the contact point" body="Alerting → Notification policies: a policy (or the default) that sends this rule's alerts to the webhook contact point." />
+      <SetupItem
+        n={5}
+        title="Press Test on the contact point"
+        body={'Grafana sends a TestAlert. The checklist below turns green and the Live feed shows "Contact point test received". TraceFix answers 202.'}
+      />
+      <StackChecklist />
+    </>
   );
 }

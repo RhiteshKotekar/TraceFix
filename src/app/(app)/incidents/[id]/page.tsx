@@ -124,7 +124,7 @@ async function Detail({ params }: Pick<PageProps<"/incidents/[id]">, "params">) 
                       label: "Code change",
                       content: (
                         <>
-                          {job?.agentOutput && <Findings out={job.agentOutput} />}
+                          {job?.agentOutput && <Findings out={job.agentOutput} meta={job.modelMeta} />}
                           {job?.diff && <Diff diff={job.diff} />}
                         </>
                       ),
@@ -522,25 +522,41 @@ function Gates({ job }: { job: Job }) {
   );
 }
 
-function Findings({ out }: { out: NonNullable<Job["agentOutput"]> }) {
+function Findings({ out, meta }: { out: NonNullable<Job["agentOutput"]>; meta: Job["modelMeta"] }) {
+  const list = (title: string, items: string[] | undefined) =>
+    items && items.length > 0 ? (
+      <div>
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
+          {items.map((e) => (
+            <li key={e}>{e}</li>
+          ))}
+        </ul>
+      </div>
+    ) : null;
   return (
     <Card>
-      <CardTitle aside={<span className="text-xs text-muted">Untrusted until verified</span>}>Agent findings</CardTitle>
-      <h3 className="text-sm font-semibold">Hypothesis</h3>
-      <p className="mt-1 text-sm">{out.hypothesis}</p>
+      <CardTitle
+        aside={
+          <span className="text-xs text-muted">
+            {meta ? `${meta.model} · ${meta.inputTokens + meta.outputTokens} tokens · ` : ""}untrusted until verified
+          </span>
+        }
+      >
+        Agent findings
+      </CardTitle>
+      <h3 className="text-sm font-semibold">Diagnosis</h3>
+      <p className="mt-1 text-sm">{out.diagnosis ?? out.hypothesis}</p>
+      {out.uncertainty && (
+        <p className="mt-2 text-xs text-muted">
+          Uncertainty: <span className="font-medium text-ink">{out.uncertainty.level}</span>. {out.uncertainty.reason}
+        </p>
+      )}
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <div>
-          <h3 className="text-sm font-semibold">Evidence</h3>
-          <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
-            {out.evidence.map((e) => <li key={e}>{e}</li>)}
-          </ul>
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold">Risks</h3>
-          <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
-            {out.risks.map((r) => <li key={r}>{r}</li>)}
-          </ul>
-        </div>
+        {list("Observed facts", out.observedFacts ?? out.evidence)}
+        {list("Hypotheses", out.hypotheses)}
+        {list("Evidence used", out.evidenceRefs)}
+        {list("Risks", out.risks)}
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-1.5">
         <span className="text-xs text-muted">Edited:</span>

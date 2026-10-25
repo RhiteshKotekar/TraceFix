@@ -131,8 +131,9 @@ export function GitHubAppSetup({
           <span>
             <span className="font-medium text-ink">Private key: {ghKeyConfigured ? "configured on the server" : "not configured"}</span>
             <span className="block text-muted">
-              Generate it under the app&apos;s Private keys and put the .pem contents in{" "}
-              <span className="font-mono">GITHUB_APP_PRIVATE_KEY</span> in the server&apos;s <span className="font-mono">.env</span>. It is never
+              Generate it under the app&apos;s Private keys, save the downloaded .pem as{" "}
+              <span className="font-mono">secrets/tracefix-app.pem</span> in the TraceFix repo (gitignored), and keep{" "}
+              <span className="font-mono">GITHUB_APP_PRIVATE_KEY_PATH</span> pointing at it in <span className="font-mono">.env</span>. It is never
               sent through the browser.
             </span>
           </span>

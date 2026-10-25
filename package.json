@@ -7,17 +7,21 @@
     "build": "next build",
     "start": "next start -p 8100",
     "lint": "eslint",
-    "stack:up": "docker compose --env-file .env -f infra/docker-compose.yml up -d",
-    "stack:down": "docker compose --env-file .env -f infra/docker-compose.yml down",
     "load": "node scripts/load.mjs",
     "sample-alert": "node scripts/send-sample-alert.mjs",
-    "test": "node --test src/lib/*.test.ts"
+    "test": "node --test src/lib/*.test.ts worker/*.test.ts",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d",
+    "db:down": "docker compose -f infra/docker-compose.yml down",
+    "db:migrate": "node --env-file=.env scripts/migrate.mjs",
+    "worker": "node --env-file=.env worker/index.ts"
   },
   "dependencies": {
     "next": "16.4.3",
+    "openai": "^7.43.0",
     "pg": "^8.23.1",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

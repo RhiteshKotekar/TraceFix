@@ -1,5 +1,5 @@
--- TraceFix schema. Loaded automatically by the compose Postgres on first start;
--- re-apply by hand with: psql "$DATABASE_URL" -f db/schema.sql (idempotent).
+-- TraceFix schema. Loaded automatically by the compose Postgres on first start.
+-- Idempotent: `npm run db:migrate` re-applies it (new columns use ADD COLUMN IF NOT EXISTS).
 
 -- One incident per problem: every Grafana report with the same alert + service + endpoint lands here.
 -- Triage, approval, the fix pipeline and the PR all happen once per incident.
@@ -92,4 +92,74 @@ CREATE TABLE IF NOT EXISTS project (
   config jsonb NOT NULL,
   completed_at timestamptz,
   updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------------------------------------------
+-- Additions for the worker, authentication and the GitHub App. Safe to re-run.
+-- ---------------------------------------------------------------------------------------------
+
+-- Incident resolution (all reports resolved in Grafana) is separate from repair completion.
+ALTER TABLE incidents ADD COLUMN IF NOT EXISTS resolved_at timestamptz;
+
+-- Worker lease: a RUNNING job whose lease expires was interrupted (worker crash or restart).
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS attempts int NOT NULL DEFAULT 0;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS worker_id text;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS lease_until timestamptz;
+-- Model/provider metadata for audit (model, response id, token usage). Never the API key.
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS model_meta jsonb;
+-- GitHub pull request lifecycle, updated from App webhooks.
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS pr_repo text;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS pr_number int;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS pr_branch text;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS pr_state text CHECK (pr_state IN ('open', 'closed', 'merged'));
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS pr_review text CHECK (pr_review IN ('approved', 'changes_requested', 'commented'));
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS pr_updated_at timestamptz;
+CREATE UNIQUE INDEX IF NOT EXISTS jobs_pr_unique ON jobs (pr_repo, pr_number) WHERE pr_number IS NOT NULL;
+
+-- Audit: who did it (user email, "automatic mode", "worker", "github").
+ALTER TABLE events ADD COLUMN IF NOT EXISTS actor text;
+ALTER TABLE events DROP CONSTRAINT IF EXISTS events_source_check;
+ALTER TABLE events ADD CONSTRAINT events_source_check
+  CHECK (source IN ('grafana', 'prometheus', 'tracefix', 'worker', 'github'));
+
+-- Dashboard sessions. Only a SHA-256 of the cookie token is stored.
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash text PRIMARY KEY,
+  email text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sessions_expiry_idx ON sessions (expires_at);
+
+-- GitHub App installations verified through GitHub's API (never trusted from the browser).
+CREATE TABLE IF NOT EXISTS github_installations (
+  installation_id bigint PRIMARY KEY,
+  account text NOT NULL,
+  repo_full_name text NOT NULL,
+  repo_id bigint NOT NULL,
+  status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'deleted', 'repo_removed')),
+  verified_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- One-time `state` values for the GitHub App install redirect.
+CREATE TABLE IF NOT EXISTS github_setup_states (
+  state_hash text PRIMARY KEY,
+  email text NOT NULL,
+  expires_at timestamptz NOT NULL,
+  used_at timestamptz
+);
+
+-- Webhook delivery ids, so a redelivered GitHub event is processed once.
+CREATE TABLE IF NOT EXISTS github_deliveries (
+  delivery_id text PRIMARY KEY,
+  event text NOT NULL,
+  received_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Worker liveness, shown in the dashboard.
+CREATE TABLE IF NOT EXISTS worker_heartbeats (
+  worker_id text PRIMARY KEY,
+  seen_at timestamptz NOT NULL DEFAULT now(),
+  current_job uuid
 );

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { Card, CardTitle, Pill } from "@/components/ui";
 import { ProjectSettings } from "@/components/ProjectSettings";
+import { ghKeyConfigured } from "@/lib/projectStore";
 
 export default function SettingsPage() {
   return (
@@ -67,7 +68,7 @@ async function Config() {
     ["Grafana webhook secret", secret(env.GRAFANA_WEBHOOK_SECRET)],
     ["Admin password", secret(env.ADMIN_PASSWORD)],
     ["OpenAI API key", secret(env.OPENAI_API_KEY)],
-    ["GitHub App private key", secret(env.GITHUB_APP_PRIVATE_KEY)],
+    ["GitHub App private key", ghKeyConfigured()],
   ];
   const editable = env.TARGET_EDITABLE_PATHS?.split(",").map((p) => p.trim()).filter(Boolean) ?? [];
 

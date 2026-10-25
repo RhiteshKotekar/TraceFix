@@ -2,7 +2,9 @@ import { connection } from "next/server";
 import { pool } from "@/lib/db";
 import { slowestRoute, targetUp } from "@/lib/prometheus";
 import { P95_THRESHOLD_MS } from "@/lib/triage";
-import { serviceJob } from "@/lib/projectStore";
+import { metricsUrl, serviceJob } from "@/lib/projectStore";
+import { scrapeService, type DirectMetrics } from "@/lib/scrape";
+import { guard } from "@/lib/auth";
 
 export type LiveEvent = {
   id: string;
@@ -19,10 +21,14 @@ export type LiveSnapshot = {
   metrics: { p95Ms: number | null; rps: number | null; errorRate: number | null; up: boolean | null };
   events: LiveEvent[];
   cursor: number; // pass back as ?after= to receive only newer stored events
+  direct: DirectMetrics | null; // read straight from the service's metrics URL
+  directError: string | null;
 };
 
 export async function GET(req: Request) {
   await connection();
+  const g = await guard(req);
+  if (g.error) return g.error;
   const after = Number(new URL(req.url).searchParams.get("after"));
   const now = new Date().toISOString();
 
@@ -44,10 +50,22 @@ export async function GET(req: Request) {
   let prometheus: LiveSnapshot["prometheus"] = "live";
   let route: string | null = null;
   let metrics: LiveSnapshot["metrics"] = { p95Ms: null, rps: null, errorRate: null, up: null };
+  // The service's own /metrics, read directly (works even when Prometheus is down).
+  const url = await metricsUrl().catch(() => null);
+  let direct: DirectMetrics | null = null;
+  let directError: string | null = url ? null : "No metrics URL: set the base URL in project setup";
+  if (url) {
+    try {
+      direct = await scrapeService(url);
+    } catch (e) {
+      directError = `Could not read ${url}: ${e instanceof Error ? e.message : "request failed"}`;
+    }
+  }
+
   const job = await serviceJob().catch(() => null);
   if (!job) {
     events.push({ id: `prometheus-${now}`, at: now, source: "prometheus", level: "warn", message: "No project configured yet; finish setup to watch a service", incidentId: null });
-    return Response.json({ prometheus, route, metrics, events, cursor } satisfies LiveSnapshot, { headers: { "Cache-Control": "no-store" } });
+    return Response.json({ prometheus, route, metrics, events, cursor, direct, directError } satisfies LiveSnapshot, { headers: { "Cache-Control": "no-store" } });
   }
   try {
     const [m, up] = await Promise.all([slowestRoute(job), targetUp(job)]);
@@ -72,6 +90,6 @@ export async function GET(req: Request) {
     events.push({ id: `prometheus-${now}`, at: now, source: "prometheus", level: "error", message: "Prometheus unreachable at PROMETHEUS_URL", incidentId: null });
   }
 
-  const body: LiveSnapshot = { prometheus, route, metrics, events, cursor };
+  const body: LiveSnapshot = { prometheus, route, metrics, events, cursor, direct, directError };
   return Response.json(body, { headers: { "Cache-Control": "no-store" } });
 }

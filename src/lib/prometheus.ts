@@ -40,10 +40,11 @@ export async function targetUp(job: string): Promise<boolean | null> {
 }
 
 // The slowest route right now (p95 over 1m), plus overall request and error rates for the job.
+// `> 0` drops idle routes: their quantile is NaN, which would otherwise win topk.
 export async function slowestRoute(job: string) {
   const res = await fetch(
     `${BASE()}/api/v1/query?query=${encodeURIComponent(
-      `topk(1, histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{job="${job}", route!~"unmatched|/metrics"}[1m]))))`,
+      `topk(1, histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{job="${job}", route!~"unmatched|/metrics"}[1m]))) > 0)`,
     )}`,
     { signal: AbortSignal.timeout(1000), cache: "no-store" },
   );

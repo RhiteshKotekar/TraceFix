@@ -1,6 +1,6 @@
-# Local monitoring stack for the TraceFix prototype. Run from the repo root:
-#   docker compose --env-file .env -f infra/docker-compose.yml up -d
-# TraceFix (:8100) and the shop app (:5002) run on the host; containers reach them via host.docker.internal.
+# TraceFix's own database. Prometheus and Grafana are not part of TraceFix: point
+# PROMETHEUS_URL and GRAFANA_URL in .env at the ones you already run.
+# From the repo root: npm run db:up
 name: tracefix
 
 services:
@@ -20,27 +20,6 @@ services:
       test: ["CMD-SHELL", "pg_isready -U tracefix -d tracefix"]
       interval: 5s
       retries: 10
-
-  prometheus:
-    image: prom/prometheus:v3.5.0
-    ports: ["9090:9090"]
-    extra_hosts: ["host.docker.internal:host-gateway"]
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-
-  grafana:
-    image: grafana/grafana:12.1.0
-    ports: ["3001:3000"]
-    extra_hosts: ["host.docker.internal:host-gateway"]
-    environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
-      # Read by the provisioning files below ($VAR expansion).
-      GRAFANA_WEBHOOK_SECRET: ${GRAFANA_WEBHOOK_SECRET:?set GRAFANA_WEBHOOK_SECRET in .env}
-      TRACEFIX_WEBHOOK_URL: ${TRACEFIX_WEBHOOK_URL:-http://host.docker.internal:8100/api/webhooks/grafana}
-    volumes:
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
-    depends_on: [prometheus]
 
 volumes:
   pgdata:

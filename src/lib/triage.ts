@@ -1,4 +1,4 @@
-import type { Triage } from "@/lib/model";
+import type { Triage } from "./model.ts";
 
 export const P95_THRESHOLD_MS = Number(process.env.ALERT_P95_THRESHOLD_MS) || 200;
 

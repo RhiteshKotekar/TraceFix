@@ -7,31 +7,31 @@ A Grafana latency alert becomes an incident. A human approves it. A worker gathe
 The monitored ("slow") app lives in its own repository — see `TARGET_REPO_URL` in `.env.example`.
 
 ## Quick start (everything on localhost)
+TraceFix does not ship Prometheus or Grafana; it uses the ones you already run (by default the shop repo's
+`docker compose`: Prometheus :9090, Grafana :3000).
+
 ```bash
-cp .env.example .env            # set GRAFANA_WEBHOOK_SECRET (openssl rand -hex 24)
+cp .env.example .env            # set GRAFANA_WEBHOOK_SECRET (openssl rand -hex 24); check PROMETHEUS_URL / GRAFANA_URL
 npm install
-npm run stack:up                # Postgres :5433 (schema auto-loaded), Prometheus :9090, Grafana :3001 (admin/admin)
-npm run dev                     # TraceFix on :8100
-
-# in ../waymark-target-shop/backend (uses the "shop" DB on :5433 via its .env)
-npm install && npm start        # shop on :5002, exposes /metrics and /api/version
-
-npm run load                    # make a route slow; Grafana's alert fires after ~30s and posts to TraceFix
-npm run sample-alert            # alternative: post a Grafana-shaped alert straight to the webhook
+npm run db:up                   # TraceFix's Postgres on :5433 (schema auto-loaded)
+npm run dev                     # TraceFix on :8100, then open /setup
 ```
-Check progress at `/setup` (step 4 shows a live checklist of the stack) and `/live`.
 
-### How the data flows
-```text
-shop /metrics ──scrape 5s──> Prometheus ──query──> Grafana rule HighEndpointLatency
-  (p95 per route > 200 ms for 30s; one alert instance per route)
-      └─ contact point "tracefix" ──POST + Bearer secret──> /api/webhooks/grafana
-           └─ report stored → grouped into the incident for (alert, service, endpoint)
-              → triage scored → manual approval, or auto-start in automatic mode → job QUEUED
-```
-Grafana is provisioned from `infra/grafana/provisioning/` (datasource, rule, contact point, policy); edit the
-files and `docker restart tracefix-grafana-1`. While an alert keeps firing Grafana re-sends it every 2 minutes.
-To wipe local data: `npm run stack:down && docker volume rm tracefix_pgdata`.
+### Connect your Grafana
+1. **Contact point:** Alerting → Contact points → Webhook, URL `http://host.docker.internal:8100/api/webhooks/grafana`
+   (Grafana in Docker) or `http://localhost:8100/api/webhooks/grafana`; Authorization header scheme `Bearer`,
+   credentials = `GRAFANA_WEBHOOK_SECRET`.
+2. **Alert rule labels:** an `endpoint` (or `route`) label, and `service` (falls back to `job`, then the project's
+   service name). Alerts with the same alert name + service + endpoint are grouped into one incident.
+3. **Notification policy:** route the rule to that contact point.
+   Press **Test** on the contact point: TraceFix answers `202` and the Live feed shows "Contact point test received".
+4. In `/setup`, set the service name to the **Prometheus job name** of the service (TraceFix queries `job="<service>"`).
+
+TraceFix also reads the service's own metrics URL (project base URL + metrics path) directly, so `/live` shows per-route
+traffic, p95, errors, memory, CPU and event-loop lag even when Prometheus is down.
+
+`npm run sample-alert` posts a Grafana-shaped alert straight to the webhook to test without Grafana.
+To wipe TraceFix data: `npm run db:down && docker volume rm tracefix_pgdata`.
 
 Not built yet: the fix worker (clone, agent, verify, PR). Approved incidents wait in `QUEUED`.
 

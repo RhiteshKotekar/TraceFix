@@ -7,15 +7,20 @@ import { when } from "@/components/ui";
 type Check = { key: keyof StackStatus; label: string | ((s: StackStatus | null) => string); fix: string };
 
 const CHECKS: Check[] = [
-  { key: "database", label: "TraceFix database (DATABASE_URL)", fix: "Start the stack (command 1)." },
-  { key: "prometheus", label: "Prometheus (PROMETHEUS_URL)", fix: "Start the stack (command 1)." },
+  { key: "database", label: "TraceFix database (DATABASE_URL)", fix: "Run npm run db:up and check DATABASE_URL." },
+  { key: "prometheus", label: "Prometheus (PROMETHEUS_URL)", fix: "Start your Prometheus and check PROMETHEUS_URL in .env." },
   {
     key: "target",
     label: (s) => (s?.service ? `Prometheus is scraping job "${s.service}"` : "Prometheus is scraping your service (save the Service step first)"),
-    fix: "Start the service (command 2) and make sure its job name in prometheus.yml matches the service name.",
+    fix: "Start the service, and make sure the project's service name equals its Prometheus job name.",
   },
-  { key: "grafana", label: "Grafana (GRAFANA_URL), alert rule + webhook provisioned", fix: "Start the stack (command 1)." },
-  { key: "lastWebhookAt", label: "First alert webhook received from Grafana", fix: "Put load on the service (command 3) and wait about a minute." },
+  {
+    key: "metricsEndpoint",
+    label: (s) => (s?.metricsUrl ? `Service metrics URL answers (${s.metricsUrl})` : "Service metrics URL (save the Service step first)"),
+    fix: "Start the service and check the base URL and metrics path in the Service step.",
+  },
+  { key: "grafana", label: "Grafana (GRAFANA_URL)", fix: "Start your Grafana and check GRAFANA_URL in .env." },
+  { key: "lastWebhookAt", label: "First alert webhook received from Grafana", fix: "Set up the contact point (step 2), then wait for the rule to fire." },
 ];
 
 // Polls /api/status so each item turns green as the local stack comes up.
